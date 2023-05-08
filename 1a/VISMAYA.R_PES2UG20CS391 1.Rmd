@@ -1,0 +1,312 @@
+---
+title: "PES University, Bangalore"
+subtitle: "Established under Karnataka Act No. 16 of 2013"
+author: 
+  - "UE20CS312 - Data Analytics - Worksheet 1a - Part 1 - Exploring data with R"
+  - 'Designed by Harshith Mohan Kumar, Dept. of CSE - harshithmohankumar@pesu.pes.edu'
+output: pdf_document
+urlcolor: blue
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+## Exploring data with R
+
+This worksheet aims to develop your understanding of summary statistics
+and basic visualizations through a pragmatic approach.
+
+**Data Dictionary**
+
+    Name: Name of the account
+    Rank: Overall rank in the world.
+    Category: Stream of the account (Music, Games, etc..)
+    Followers: Number of followers
+    Audience Country: country of the majority of audience.
+    Authentic Engagement: Engagement with the users.
+    Engagement Avg.: Average engagement of the users.
+
+## Problems
+
+``` markdown
+---
+title: "UE20CS312 - Data Analytics - Worksheet 1a - Part 1 - Exploring data with R"
+subtitle: "PES University"
+author: 
+  - 'VISMAYA.R, Dept. of CSE - PES2UG20CS391'
+output: pdf_document
+urlcolor: blue
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+```
+
+## Solutions
+
+### Load the Dataset
+
+``` r
+library(tidyverse)
+# Remember: You need to install tidyverse package to load it!
+df <- read_csv("top_1000_instagrammers.csv")
+```
+
+### Problem 1
+
+### CODE-1
+
+``` {r,echo=FALSE}
+library(tidyverse)
+df <- read_csv("top_1000_instagrammers.csv")
+
+chartonum<-function(col){
+  num_col <- seq(1,1000)
+  
+  for(i in 1:length(col)) {
+    len<-nchar(col[i])
+    if(substring(col[i],len,len+1)=="M"){
+      temp<-substring(col[i],1,len-1)
+      temp<-as.double(temp)
+      temp<-temp*1000000
+      num_col[i]<-temp
+    } 
+    
+    if(substring(col[i],len,len+1)=="K"){
+      temp<-substring(col[i],1,len-1)
+      temp<-as.double(temp)
+      temp<-temp*1000
+      num_col[i]<-temp
+    }
+    
+    if(col[i]=="0"){
+      num_col[i]<-0
+    }
+  }
+  return(num_col)
+}
+
+mode = function(col){
+  # return(sort(-table(col))[1])
+  which.max(tabulate(col))
+}
+
+##Summary stats
+df$num_Fo <-chartonum(df$Followers)
+print("Followers column")
+cat("MEAN:",mean(df$num_Fo),fill=TRUE)
+cat("Medain:",median(df$num_Fo),fill=TRUE)
+cat("Mode:",mode(df$num_Fo),fill=TRUE)
+cat("Min:",min(df$num_Fo),fill=TRUE)
+cat("Max:",max(df$num_Fo),fill=TRUE)
+cat("1st Quartile:",quantile(df$num_Fo, probs = c(0.25)),fill=TRUE)
+cat("3rd Quartile:",quantile(df$num_Fo, probs = c(0.75)),fill=TRUE)
+cat("Standard Deviation:",sd(df$num_Fo),fill=TRUE)
+#########################################################
+
+df$num_AE <-chartonum(df$`Authentic Engagement`)
+print("Authentic Engagement column")
+cat("MEAN:",mean(df$num_AE),fill=TRUE)
+cat("Medain:",median(df$num_AE),fill=TRUE)
+cat("Mode:",mode(df$num_AE),fill=TRUE)
+cat("Min:",min(df$num_AE),fill=TRUE)
+cat("Max:",max(df$num_AE),fill=TRUE)
+cat("1st Quartile:",quantile(df$num_AE, probs = c(0.25)),fill=TRUE)
+cat("3rd Quartile:",quantile(df$num_AE, probs = c(0.75)),fill=TRUE)
+cat("Standard Deviation:",sd(df$num_AE),fill=TRUE)
+###
+df$num_EA <-chartonum(df$`Engagement Avg.`)
+print("Engagement Avg. column")
+cat("MEAN:",mean(df$num_EA),fill=TRUE)
+cat("Medain:",median(df$num_EA),fill=TRUE)
+cat("Mode:",mode(df$num_EA),fill=TRUE)
+cat("Min:",min(df$num_EA),fill=TRUE)
+cat("Max:",max(df$num_EA),fill=TRUE)
+cat("1st Quartile:",quantile(df$num_EA, probs = c(0.25)),fill=TRUE)
+cat("3rd Quartile:",quantile(df$num_EA, probs = c(0.75)),fill=TRUE)
+cat("Standard Deviation:",sd(df$num_EA),fill=TRUE)
+```
+
+### OUTPUT SCREENSHOT
+
+![](images/Problem1.png){width="258"}
+
+### ANALYSIS
+
+All the 3 data columns show a positively skewed distribution as the mean
+is greater than the median.This means the outliers of the distribution
+are further out towards the right and closer to the mean on the left
+
+The minimum value is zero in Authentic Engagement but non-zero in the
+other two, this means that you can be a top Instagram influencer with
+zero Authentic Engagement as long as maintain your followers count by
+there is average engagement from the users' side.
+
+As we compare standard deviation values, we find out that the Followers
+values is the one with the most variations, followed by Engagement
+Average and then Authentic Engagement.
+
+Also, the Inter Quartile Range of "Followers" data is quite high
+compared to the other two, this means that the Top Instagram Influencers
+depict a very wide range of Followers count, while the Engagement
+Average and Authentic Engagement values are comparatively similar.
+
+### Problem 2
+
+### CODE-2
+
+``` {r,echo=FALSE}
+library(tidyverse)
+df <- read_csv("top_1000_instagrammers.csv")
+
+chartonum<-function(col){
+  
+  num_col <- seq(1,1000)
+  
+  for(i in 1:length(col)) {
+    len<-nchar(col[i])
+    
+    if(substring(col[i],len,len+1)=="M"){
+      temp<-substring(col[i],1,len-1)
+      temp<-as.double(temp)
+      temp<-temp*1000000
+      num_col[i]<-temp
+    } 
+    
+    if(substring(col[i],len,len+1)=="K"){
+      temp<-substring(col[i],1,len-1)
+      temp<-as.double(temp)
+      temp<-temp*1000
+      num_col[i]<-temp
+    }
+    
+    if(col[i]=="0"){
+      num_col[i]<-0
+    }
+    
+    
+  }#for loop ends
+  
+  
+  return(num_col)
+}
+
+col_AC<-df$'Audience Country'
+col_Fo<-chartonum(df$Followers)
+
+Fcounts<-c()
+countries<-c()
+
+for(i in 1:length(col_AC)){
+  
+  if(!(is.na(col_AC[i])) && col_AC[i] %in% countries){
+   Fcounts[which(countries==col_AC[i])]<-Fcounts[which(countries==col_AC[i])]+col_Fo[i]
+  }
+  
+  else if(!(is.na(col_AC[i])) && !(col_AC[i] %in% names(Fcounts))){
+   countries<-append(countries,col_AC[i])
+   Fcounts<-append(Fcounts,col_Fo[i])
+    }
+}
+
+barplot(Fcounts , names.arg=countries ,cex.lab=1.3,cex=0.5,cex.axis=0.9,las=2, main="Barplot:Audience Country vs No. of Followers from that country" ,xlab="Audience Country",ylab="No. of Followers")
+```
+
+### OUTPUT SCREENSHOT
+
+![](images/Problem2.png)
+
+### ANALYSIS
+
+From the tallest bar in the bargraph it is clear that The United States
+has the most amount of followers ,which is about 9 Billion. India ranks
+second with about 5 Billion Followers. This can be attributed to the
+fact that in Inida, Instagram is mostly used by the younger generation
+of the age group 18-25 as older generation people are still facebook
+savy, unlike The United States where it is quite popular among a lot of
+different age groups.So, even though India has more population, it only
+has half the Instagram followers as compared to the US.
+
+### Problem 3
+
+### CODE-3
+
+```{r,echo=FALSE}
+library(tidyverse)
+df <- read_csv("top_1000_instagrammers.csv")
+
+chartonum<-function(col){
+  num_col <- seq(1,1000)
+  for(i in 1:length(col)) {
+    len<-nchar(col[i])
+  
+    if(substring(col[i],len,len+1)=="M"){
+      temp<-substring(col[i],1,len-1)
+      temp<-as.double(temp)
+      temp<-temp*1000000
+      num_col[i]<-temp
+    } 
+    
+    if(substring(col[i],len,len+1)=="K"){
+      temp<-substring(col[i],1,len-1)
+      temp<-as.double(temp)
+      temp<-temp*1000
+      num_col[i]<-temp
+    }
+    
+    if(col[i]=="0"){
+      num_col[i]<-0
+    }
+    
+    
+  }
+  return(num_col)
+}
+
+df$num_AuthEng <-chartonum(df$`Authentic Engagement`)
+boxplot(df$num_AuthEng,horizontal=TRUE,main = "Horizontal Boxplot of Authentic Engagement")
+
+```
+
+### OUTPUT SCREENSHOT
+
+![](images/Problem3.png)
+
+### ANALYSIS
+
+In the above figure, the Authentic Engagement values are skewed right.
+That is,the boxplot is positively skewed. The part of the box to the
+left of the median (representing the lesser values) is shorter than the
+part to the right of the median (representing the larger values). That
+means the Authentic Engagement values of the lower rank influencers are
+closer together than the values of the higher ones. This indicates that
+while the lower rank influencers maintain a similar level of Authentic
+Engagement,the ones in the higher ranks are more varied. There are also
+a lot of unusually high Authentic Engagement values in the higher rank
+section as evident by the outliers. This is a indication of the
+snowballing effect of popularity found in Influencers which also makes
+it harder for a newer influencers to emerge.
+
+### Conclusion
+
+My Instagram profile has around 400 followers with estimated engagement
+of around 150. It falls under the category of "Lifestyle". Comparing my
+account to the analysis, the category of my account is not as popular
+compared to the categories of the top influencers such as "Sports with a
+ball" and "Music". Also, even though they already have a high followers
+count, the top influencers still maintain a high amount of Authentic
+Engagement with the users, which eventually in return increases both
+their user engagement and followers count, this means that they put in a
+lot of effort into their accounts unlike me. Also, they constantly come
+up with new trends and ideas to keep their followers engaged.
+
+If I was tasked to becoming an influencer then I would start by honing a
+unique bio and a recognisable username .Picking a niche which represents
+you is very important. As seen by the analysis of the dataset, all the
+top instagram influencers are the people with accounts in their own
+fields of expertise. As high-quality content help influencers earn a
+reputation regardless of the format of the content, it is necessary to
+use powerful video and photo editing tools. Next comes the regular
+publishing of the content which could turn a casual viewer into a
+follower. After setting everything up, there must be regular interaction
+with the followers to help increase user engagement.

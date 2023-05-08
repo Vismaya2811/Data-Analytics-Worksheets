@@ -1,0 +1,166 @@
+---
+title: "UE20CS312 - Data Analytics - Worksheet 1b"
+subtitle: "PES University"
+author: 
+  - 'VISMAYA.R, Dept. of CSE - PES2UG20CS391'
+output: pdf_document
+urlcolor: blue
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+### Loading dataset and inserting libraries
+
+```{r}
+library(tidyverse)
+library(ggpubr)
+library(ggplot2)
+df <- read.csv('road_accidents_india_2016.csv', row.names=1)
+```
+
+### Problem 1
+
+```{r}
+Total_acc<-function(wcol,tcol){
+  
+  for(i in 1:36) {
+   tcol[i] <- tcol[i] + wcol[i] 
+  }
+  return(tcol)
+}
+
+total_col <- seq(1,36)
+for(j in 1:36){total_col[j]<-0}
+df$total_accidents <-Total_acc(df$Fine.Clear...Total.Accidents,total_col)
+df$total_accidents <-Total_acc(df$Mist..Foggy...Total.Accidents,df$total_accidents)
+df$total_accidents <-Total_acc(df$Cloudy...Total.Accidents,df$total_accidents)
+df$total_accidents <-Total_acc(df$Rainy...Total.Accidents,df$total_accidents)
+
+df$total_accidents <-Total_acc(df$Snowfall...Total.Accidents,df$total_accidents)
+df$total_accidents <-Total_acc(df$Hail.Sleet...Total.Accidents,df$total_accidents)
+df$total_accidents <-Total_acc(df$Dust.Storm...Total.Accidents,df$total_accidents)
+df$total_accidents <-Total_acc(df$Others...Total.Accidents,df$total_accidents)
+
+for(k in 1:36){cat("Total accidents in",df$State..UT[k],":",df$total_accidents[k],fill=TRUE)}
+```
+
+### Problem 2
+
+```{r}
+#Finding fatality rate
+total_col <- seq(1,36)
+for(j in 1:36){total_col[j]<-0}
+df$Total_deaths<- Total_acc(df$Fine.Clear...Persons.Killed,total_col)
+df$Total_deaths<- Total_acc(df$Mist..Foggy...Persons.Killed,df$Total_deaths)
+df$Total_deaths<- Total_acc(df$Cloudy...Persons.Killed,df$Total_deaths)
+df$Total_deaths<- Total_acc(df$Rainy...Persons.Killed,df$Total_deaths)
+
+df$Total_deaths<- Total_acc(df$Snowfall...Persons.Killed,df$Total_deaths)
+df$Total_deaths<- Total_acc(df$Hail.Sleet...Persons.Killed,df$Total_deaths)
+df$Total_deaths<- Total_acc(df$Dust.Storm...Persons.Killed,df$Total_deaths)
+df$Total_deaths<- Total_acc(df$Others...Persons.Killed,df$Total_deaths)
+
+#for(k in 1:36){cat("Total deaths in",df$State..UT[k],":",df$Total_deaths[k],fill=TRUE)}
+
+frate<-function(tacc,tdeath){
+  fcol <- seq(1,36)
+  for(i in 1:36) {
+    fcol[i] <- tdeath[i] / tacc[i] 
+  }
+  return(fcol)
+}
+
+df$fatality_rate <-frate(df$total_accidents,df$Total_deaths)
+for(k in 1:36){cat("Fatality rate in",df$State..UT[k],":",df$fatality_rate[k],fill=TRUE)}
+```
+
+Finding Mist/Foggy rate:
+
+```{r}
+#Mist/foggy rate:Fraction of total accidents that happen in mist/foggy conditions
+mfgrate<-function(tacc,mfgacc){
+  mfgcol <- seq(1,36)
+  for(i in 1:36) {
+    mfgcol[i] <- mfgacc[i] / tacc[i] 
+  }
+  return(mfgcol)
+}
+df$mfg_rate <-mfgrate(df$total_accidents,df$Mist..Foggy...Total.Accidents)
+for(k in 1:36){cat("Mist/Foggy rate in",df$State..UT[k],":",df$mfg_rate[k],fill=TRUE)}
+```
+
+## Finding correlation coefficent
+
+```{r}
+result=cor.test(df$fatality_rate,df$mfg_rate , method = "pearson")
+print(result)
+```
+
+Since the p-value is greater than 0.05 (5% significance level), there is
+no statistically significant correlation between the fatality rate and
+the mist/foggy rate
+
+## Scatter PLot
+
+```{r}
+plot(df$fatality_rate,df$mfg_rate,cex=2, col="#69b3a2",xlab="Fatality rate", ylab="misty/foggy rate",main="Plot of fatality rate vs mist/foggy rate" )
+```
+
+## PROBELM 3
+
+```{r}
+df$acc_rank<-rank(desc(df$total_accidents),ties.method='random')
+df$fatal_rank <- rank(desc(df$Total_deaths),ties.method='random')
+
+print(cor.test(df$acc_rank,df$fatal_rank, method='spearman'))
+
+```
+
+```{r}
+ggscatter(df, x='acc_rank', y='fatal_rank',
+add='reg.line', conf.int=TRUE,
+cor.coef=TRUE, cor.method = 'spearman')
+```
+
+```{r}
+rs <- cor(df$acc_rank,df$fatal_rank,
+method='spearman')
+
+degrees <- nrow(df) - 2
+t_stat <- (rs - 0.2)/sqrt((1 - rs*rs)/(nrow(df) - 2))
+t_stat
+
+#2-tailed test p-value
+2 * pt(q=t_stat, df=degrees, lower.tail=FALSE)
+```
+
+Since the p-value is lesser than 0.05 (5% significance level),our
+hypotheses is correct
+
+## Problem 4
+
+```{r}
+df$hail_binary <- ifelse(df$Hail.Sleet...Total.Accidents > 0, 1, 0)
+df$rain_acc <- df$Rainy...Total.Accidents
+print.data.frame(df[, c('State..UT','hail_binary', 'rain_acc')])
+
+```
+
+```{r}
+cor.test(df$rain_acc,df$hail_binary, method='pearson')
+```
+
+There is no significant correlation
+
+## Probelm 5
+
+```{r}
+df$dust_binary <- ifelse(df$Dust.Storm...Total.Accidents > 0, 1, 0)
+contingency_table <- table(df[, c('dust_binary', 'hail_binary')])
+contingency_table
+
+library(psych)
+phi(contingency_table)
+
+```

@@ -1,0 +1,324 @@
+---
+title: "UE20CS312 - Data Analytics - Worksheet 1a - Part 2 - Exploring data with R"
+subtitle: "PES University"
+author: 
+  - 'VISMAYA.R, Dept. of CSE - PES2UG20CS391'
+output: pdf_document
+urlcolor: blue
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+## PART I - Exploratory Data Analysis with R
+
+### Loading dataset and inserting libraries
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+cbc_df <- read_csv("CharlesBookClubDataset.csv")
+```
+
+### Problem 1
+
+Generate an understanding of the dataset via a summary of its features.
+Find the count, missing count, minimum, 1st quartile, median, mean, 3rd
+quartile, max and standard deviation of all relevant columns.
+Separately, print the total number of missing values in each column.
+
+```{r}
+summary(cbc_df)
+# Number of missing values in each column
+colSums(is.na(cbc_df))
+```
+
+### Problem 2
+
+Replace missing values within the Recency, Frequency, and Monetary
+features with suitable values. Explain your reasoning behind the method
+of substitution used.. Also, plot the distribution of feature values
+after imputation.
+
+```{r}
+#plotting histogram before replacing missing values
+hist(cbc_df$M, breaks=30,main="Monetary before filling missing values")
+hist(cbc_df$R, breaks=30, main="Recency before filling missing values")
+hist(cbc_df$F, breaks=30, main="Frequency before filling missing values")
+
+mode <- function(x) {
+mode0 <- names(which.max(table(x)))
+    if(is.numeric(x)) return(as.numeric(mode0))
+    return(mode0)
+}
+# Apply to all necessary columns
+cbc_df$R[is.na(cbc_df$R)] <- mode(cbc_df$R)
+cbc_df$F[is.na(cbc_df$F)] <- mode(cbc_df$F)
+cbc_df$M[is.na(cbc_df$M)] <- mode(cbc_df$M)
+
+```
+
+By the histograms, we get to know that the 3 columns M,R and F are
+positively skewed , hence the method chosen for data imputaion will be
+Replacing by mode. The distribution of feature values after data
+imputation is as follows:
+
+```{r}
+#plotting histogram after replacing missing values
+hist(cbc_df$'M', main="Monetary after filling missing values", breaks=30)
+hist(cbc_df$'R', main="Recency after filling missing values", breaks=30)
+hist(cbc_df$'F', main="Frequency after filling missing values", breaks=30)
+```
+
+### Problem 3
+
+Discretize the continuous values of Monetary, Recency, and Frequency
+into appropriate bins, and create three new columns Mcode, Rcode and
+Fcode respectively, for the discretized values. Print out the summary of
+the newly created columns.Explicitly mention the number of bins used and
+explain the choice for the bin size. Print out the summary of the newly
+created columns.What are the most optimum breakpoints you can choose?
+Try to think of a statistical function that provides these breakpoints
+for optimum binning.
+
+```{r}
+#problem 3
+
+cbc_df <- cbc_df %>% mutate(Rcode=cut(cbc_df$R,
+  breaks=unique(
+  quantile(cbc_df$R,
+  probs=seq.int(0,1,by=1/4))),
+  include.lowest=TRUE),
+  
+Mcode=cut(cbc_df$M,
+  breaks=unique(
+  quantile(cbc_df$M,
+  probs=seq.int(0,1,by=1/5))),
+  include.lowest=TRUE),
+
+  Fcode=cut(cbc_df$F,
+  breaks=unique(
+  quantile(cbc_df$F,
+  probs=seq.int(0,1,by=1/4))),
+  include.lowest=TRUE))
+
+levels(cbc_df$Mcode) <- c('$15-$112', '$112-$181', '$181-$242', '$242-$296', '$296-$479')
+levels(cbc_df$Rcode) <- c('2-8 months', '8-14 months', '14-16 months', '16-36 months')
+levels(cbc_df$Fcode) <- c('1-2 books', '2-6 books', '6-12 books')
+
+cat("\n")
+#summary
+print("Mcode:")
+summary(cbc_df$Mcode)
+cat("\n")
+print("Rcode:")
+summary(cbc_df$Rcode)
+cat("\n")
+print("Fcode:")
+summary(cbc_df$Fcode)
+
+```
+
+### Problem 4
+
+#### Problem 4.1
+
+Transform the Florence variable into a categorical feature that can take
+up the values True or False. Create and visualize horizontal box plots
+for the original Recency, Frequence, Monetary and FirstPurch features
+against the Florence variable.
+
+```{r}
+#Problem 4
+#Problem 4.1
+ggplot(cbc_df, aes(x = Fcode)) + geom_bar()+labs(x = "Frequency")
+ggplot(cbc_df, aes(x = Rcode)) + geom_bar()+labs(x = "Recency")
+ggplot(cbc_df, aes(x = Mcode)) + geom_bar()+labs(x = "Monetary")
+ggplot(cbc_df, aes(x = FirstPurch)) + geom_bar()+labs(x = "First Purchase")
+```
+
+#### Problem 4.2
+
+Transform the Florence variable into a categorical feature that can take
+up the values True or False. Create and visualize horizontal box plots
+for the original Recency, Frequence, Monetary and FirstPurch features
+against the Florence variable.
+
+```{r}
+#Problem 4.2
+#Transforming "Florence"
+
+cbc_df$Florence <- factor(cbc_df$Florence, labels = c("No", "Yes"))
+# Plot box plots
+ggplot(cbc_df, aes_string(x = "Florence", y = "R")) +
+geom_boxplot() +
+coord_flip() +
+labs(x = "Recency", y = "Did the customer make a purchase?") 
+
+ggplot(cbc_df, aes_string(x = "Florence", y = "M")) +
+geom_boxplot() +
+coord_flip()+
+labs(x = "Recency", y = "Did the customer make a purchase?") 
+
+ggplot(cbc_df, aes_string(x = "Florence", y = "F")) +
+geom_boxplot() +
+coord_flip() +
+labs(x = "Frequency", y = "Did the customer make a purchase?")
+```
+
+#### Problem 4.3
+
+Create and visualize a density plot for Recency, Frequency, Monetary and
+FirstPurch features.
+
+```{r}
+#Problem 4.3
+ggplot(cbc_df, aes_string(x = "R", fill = "Florence")) +
+geom_density(alpha = 1) +
+labs(x = "Recency") +
+theme(legend.position = c(0.75, 0.75))
+
+ggplot(cbc_df, aes_string(x = "M", fill = "Florence")) +
+geom_density(alpha = 1) +
+labs(x = "Monetary") +
+theme(legend.position = c(0.9, 0.9))
+
+ggplot(cbc_df, aes_string(x = "F", fill = "Florence")) +
+geom_density(alpha = 1) +
+labs(x = "Frequency") +
+theme(legend.position = c(0.5, 0.5))
+```
+
+## Part II. ANOVA
+
+### Problem 1
+
+1.  Considering the dataset,we use a one-way ANOVA test. As the data
+    contains one categorical independent variable and one quantitative
+    dependent variable. Also, the independent variable has more than
+    three levels.
+
+2.  We can perform an ANOVA in R using the functions: aov() ,anova() ,
+
+```{r}
+library(ggpubr)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(broom)
+library(car)
+df <- read.csv('Scenario 1.csv') #Load the Dataset
+
+anova_1 <-aov(df$No.of.items ~ df$POI, data = df)
+summary(anova_1)
+```
+
+3.The Df column displays that the degrees of freedom for the POI
+variable is 4, and the degrees of freedom for the residuals (the total
+number of observations minus one and minus the number of levels in the
+POI variable) is 995
+
+The Sum Sq column displays the sum of squares, this means that the total
+variation between the group means and the overall mean is 127 for the
+POI variable and for the Residuals it is, 30827.
+
+The Mean Sq column is the mean of the sum of squares, calculated to be
+31.75 for the POI column and 30.98 for the Residuals.
+
+The F-value column is the test statistic from the F test.
+
+The Pr(\>F) column is the p-value of the F-statistic.The p-value of the
+POI variable is greater than the significance level (p \> 0.05), so it
+appears that the POI does not have a real impact on the No.of.items in
+the evidence log about him/her.
+
+### Problem 2
+
+1.  Considering the dataset,we use a two-way ANOVA test. As the data
+    contains more than one categorical independent variable and one
+    quantitative dependent variable. Also, the independent variables
+    have more than three levels.
+2.  We can perform an ANOVA in R using the functions: aov() ,anova() ,
+
+```{r}
+library(ggpubr)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(broom)
+library(car)
+df2 <- read.csv('Scenario 2.csv') #Load the Dataset
+
+anova_2 <-aov(df2$No.of.items ~ df2$POI * df2$Priority, data = df2)
+summary(anova_2)
+```
+
+3.The Df column displays that the degrees of freedom for the POI
+variable.
+
+The Sum Sq column displays the sum of squares.
+
+The Mean Sq column is the mean of the sum of squares.
+
+The F-value column is the test statistic from the F test.
+
+Pr(\>F) is the p-value of the F-statistic. Considering 5% significance,
+it is clear that both POI and Priority columns have a relation with the
+No of items in the evidence log. Also, as both POI and Priority columns
+are categorical, there can be no relation between them.
+
+4.assumptions of 2 way ANOVA are:
+
+i)Independence of observations: Categorical variables cannot be compared
+with F Statistic and can only be ensured to be independent variables by
+experimental design.
+
+ii) Normally-distribution of dependent variable
+
+iii) From the following graphs Homogeneity of variance is clear.
+
+```{r}
+plot(anova_2)
+
+hist(df2$No.of.items,main="Dependent Variable",xlab="No of Items")
+hist(anova_2$residuals,main="Histogram of Residuals",xlab="Residuals")
+
+```
+
+### Problem 3
+
+```{r}
+library(ggpubr)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(broom)
+library(car)
+df2 <- read.csv('Scenario 2.csv') #Load the Dataset
+
+anova_2 <-aov(formula=df2$No.of.items ~ factor(df2$POI) + df2$Priority, data = df2)
+
+tukey_anova_2<-TukeyHSD(anova_2)
+
+tukey_anova_2
+
+par(mar=c(5,8,4,1)+.1)
+tukey.plot.test<-TukeyHSD(aov(formula = No.of.items ~ factor(POI), data = df2))
+plot(tukey.plot.test, las = 1)
+
+par(mar=c(5,8,4,1)+.1)
+tukey.plot.test<-TukeyHSD(aov(formula = No.of.items ~ Priority, data = df2))
+plot(tukey.plot.test, las = 1)
+
+```
+
+From the post-hoc test results, we see that there are no statistically
+significant differences (p \< 0.05) between the different sets of POI
+groups. There is no difference in the average no of Evidence items
+collected when compared with any two POI.
+
+While, there is a statistically significant difference between the
+Priority groups: high-critical,low-critical and med-critical. The other
+Priority groups show no statistically significant difference.This shows
+that assigning high priority to cases does bring about change in the
+collection of evidence.
